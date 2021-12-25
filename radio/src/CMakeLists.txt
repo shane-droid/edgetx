@@ -346,7 +346,7 @@ endif()
 
 if(SPI_FLASH)
   add_definitions(-DSPI_FLASH)
-  set(SRC ${SRC} nor_flash.cpp )
+  set(SRC ${SRC} SpiFlashStorage.cpp )
 endif()
 
 if(SHUTDOWN_CONFIRMATION)
