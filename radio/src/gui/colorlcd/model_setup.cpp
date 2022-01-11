@@ -256,7 +256,10 @@ void ModelSetupPage::build(FormWindow * window)
   form->setFlexLayout(LV_FLEX_FLOW_ROW_WRAP, lv_dpx(8));
   lv_obj_set_style_pad_all(form->getLvObj(), lv_dpx(8), 0);
   
+#if defined(HARDWARE_INTERNAL_MODULE)  
   new IntmoduleButton(form);
+#endif
+  
   new ExtmoduleButton(form);
   new TrainerModuleButton(form);
 
