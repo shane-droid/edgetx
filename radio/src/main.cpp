@@ -489,7 +489,9 @@ void perMain()
 
   if (!usbPlugged() || (getSelectedUsbMode() == USB_UNSELECTED_MODE)) {
     checkEeprom();
+#if defined(SDCARD)
     logsWrite();
+#endif
   }
 
   handleUsbConnection();
@@ -521,11 +523,11 @@ void perMain()
     return;
   }
 #endif
-
-  if ((!usbPlugged() || (getSelectedUsbMode() == USB_UNSELECTED_MODE))
-      && SD_CARD_PRESENT() && !sdMounted()) {
-    sdMount();
-  }
+#warning TODO VirtualFS
+//  if ((!usbPlugged() || (getSelectedUsbMode() == USB_UNSELECTED_MODE))
+//      && SD_CARD_PRESENT() && !sdMounted()) {
+//    sdMount();
+//  }
 
 #if !defined(EEPROM)
   // In case the SD card is removed during the session
