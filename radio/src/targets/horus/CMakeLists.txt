@@ -279,7 +279,6 @@ set(FIRMWARE_TARGET_SRC
   board.cpp
   backlight_driver.cpp
   led_driver.cpp
-  trainer_driver.cpp
   sdram_driver.c
   startup_stm32f42_43xxx.s
   )
@@ -298,6 +297,7 @@ set(FIRMWARE_SRC
   targets/common/arm/stm32/rotary_encoder_driver.cpp
   targets/common/arm/stm32/pwr_driver.cpp
   targets/common/arm/stm32/heartbeat_driver.cpp
+  targets/common/arm/stm32/trainer_driver.cpp
   targets/common/arm/stm32/sdio_sd.c
   )
 
