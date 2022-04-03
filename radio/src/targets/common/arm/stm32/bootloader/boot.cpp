@@ -208,18 +208,28 @@ void writeEepromBlock()
 #if !defined(SIMU)
 void bootloaderInitApp()
 {
-  RCC_AHB1PeriphClockCmd(PWR_RCC_AHB1Periph | KEYS_RCC_AHB1Periph |
-                         LCD_RCC_AHB1Periph | BACKLIGHT_RCC_AHB1Periph |
-                         AUX_SERIAL_RCC_AHB1Periph | AUX2_SERIAL_RCC_AHB1Periph |
-                         I2C_B1_RCC_AHB1Periph | KEYS_BACKLIGHT_RCC_AHB1Periph |
-                         SD_RCC_AHB1Periph, ENABLE);
+  BootloaderState state = ST_START;
+  uint32_t vpos = 0;
+  uint8_t index = 0;
+  FRESULT fr;
+  uint32_t nameCount = 0;
 
-  RCC_APB1PeriphClockCmd(ROTARY_ENCODER_RCC_APB1Periph | LCD_RCC_APB1Periph | BACKLIGHT_RCC_APB1Periph |
-                         INTERRUPT_xMS_RCC_APB1Periph | I2C_B1_RCC_APB1Periph |
-                         AUX_SERIAL_RCC_APB1Periph | AUX2_SERIAL_RCC_APB1Periph |
-                         SD_RCC_APB1Periph, ENABLE);
+  RCC_AHB1PeriphClockCmd(
+      PWR_RCC_AHB1Periph | KEYS_RCC_AHB1Periph | LCD_RCC_AHB1Periph |
+          BACKLIGHT_RCC_AHB1Periph | AUX_SERIAL_RCC_AHB1Periph |
+          AUX2_SERIAL_RCC_AHB1Periph | I2C_B1_RCC_AHB1Periph |
+          KEYS_BACKLIGHT_RCC_AHB1Periph | SD_RCC_AHB1Periph,
+      ENABLE);
 
-  RCC_APB2PeriphClockCmd(LCD_RCC_APB2Periph | BACKLIGHT_RCC_APB2Periph | RCC_APB2Periph_SYSCFG | AUX_SERIAL_RCC_APB2Periph  | AUX2_SERIAL_RCC_APB2Periph, ENABLE);
+  RCC_APB1PeriphClockCmd(ROTARY_ENCODER_RCC_APB1Periph | LCD_RCC_APB1Periph |
+                             BACKLIGHT_RCC_APB1Periph |
+                             INTERRUPT_xMS_RCC_APB1Periph |
+                             I2C_B1_RCC_APB1Periph | SD_RCC_APB1Periph,
+                         ENABLE);
+
+  RCC_APB2PeriphClockCmd(
+      LCD_RCC_APB2Periph | BACKLIGHT_RCC_APB2Periph | RCC_APB2Periph_SYSCFG,
+      ENABLE);
 
   pwrInit();
   keysInit();
