@@ -44,7 +44,7 @@ class OutputEditStatusBar : public Window
       Window(parent, rect), _channel(channel)
   {
     channelBar = new ComboChannelBar(this, {OUTPUT_EDIT_STATUS_BAR_MARGIN, 0, rect.w - (OUTPUT_EDIT_STATUS_BAR_MARGIN * 2), rect.h}, channel);
-    channelBar->setLeftMargin(0);
+    channelBar->setLeftMargin(15);
     channelBar->setTextColor(COLOR_THEME_PRIMARY2);
     channelBar->setOutputChannelBarLimitColor(COLOR_THEME_EDIT);
   }
@@ -66,7 +66,7 @@ OutputEditWindow::OutputEditWindow(uint8_t channel) :
   title += "\n";
   title += getSourceString(MIXSRC_CH1 + channel);
 
-  chanZero = calcRESXto100(channelOutputs[channel]);
+  chanZero = calcRESXto100(ex_chans[channel]);
 
   auto form = new FormWindow(&body, rect_t{});
   auto form_obj = form->getLvObj();
@@ -82,7 +82,7 @@ void OutputEditWindow::checkEvents()
   if (value != newValue) {
     value = newValue;
 
-    int chanVal = calcRESXto100(channelOutputs[channel]);
+    int chanVal = calcRESXto100(ex_chans[channel]);
     minText->setBackgroudOpacity(chanVal < chanZero - 1 ? LV_OPA_COVER : LV_OPA_TRANSP);
     minText->setFont(chanVal < chanZero - 1 ? FONT(BOLD) : FONT(STD));
     minText->invalidate();

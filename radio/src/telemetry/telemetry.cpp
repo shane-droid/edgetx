@@ -223,9 +223,9 @@ inline bool isBadAntennaDetected()
   return false;
 }
 
-static inline void pollTelemetry(uint8_t module, const etx_module_driver_t* drv, void* ctx)
+static inline bool pollTelemetry(uint8_t module, const etx_module_driver_t* drv, void* ctx)
 {
-  if (!drv || !drv->getByte || !drv->processData) return;
+  if (!drv || !drv->getByte || !drv->processData) return false;
 
   uint8_t* rxBuffer = getTelemetryRxBuffer(module);
   uint8_t& rxBufferCount = getTelemetryRxBufferCount(module);
@@ -239,6 +239,8 @@ static inline void pollTelemetry(uint8_t module, const etx_module_driver_t* drv,
       LOG_TELEMETRY_WRITE_BYTE(data);
     } while (drv->getByte(ctx, &data) > 0);
   }
+
+  return true;
 }
 
 static inline void pollExtTelemetryLegacy()
@@ -265,7 +267,13 @@ void telemetryWakeup()
 
 #if defined(HARDWARE_EXTERNAL_MODULE)
   auto ext_drv = getExtModuleDriver();
-  if (ext_drv) pollTelemetry(EXTERNAL_MODULE, ext_drv, getExtModuleCtx());
+  if (ext_drv) {
+    if (pollTelemetry(EXTERNAL_MODULE, ext_drv, getExtModuleCtx())) {
+      // skip legacy telemetry polling in case external module
+      // driver defines telemetry methods (getByte & processData)
+      return;
+    }
+  }
 #endif
                              
   // TODO: needs to be moved to protocol/module init
@@ -314,7 +322,7 @@ void telemetryWakeup()
       }
     }
 
-    if (sensorLost && TELEMETRY_STREAMING() && !g_model.rssiAlarms.disabled) {
+    if (sensorLost && TELEMETRY_STREAMING() && !g_model.disableTelemetryWarning) {
       audioEvent(AU_SENSOR_LOST);
     }
 
@@ -326,13 +334,13 @@ void telemetryWakeup()
     }
 #endif
 
-    if (!g_model.rssiAlarms.disabled) {
+    if (!g_model.disableTelemetryWarning) {
       if (TELEMETRY_STREAMING()) {
-        if (TELEMETRY_RSSI() < g_model.rssiAlarms.getCriticalRssi() ) {
+        if (TELEMETRY_RSSI() < g_model.rfAlarms.critical ) {
           AUDIO_RSSI_RED();
           SCHEDULE_NEXT_ALARMS_CHECK(10/*seconds*/);
         }
-        else if (TELEMETRY_RSSI() < g_model.rssiAlarms.getWarningRssi() ) {
+        else if (TELEMETRY_RSSI() < g_model.rfAlarms.warning ) {
           AUDIO_RSSI_ORANGE();
           SCHEDULE_NEXT_ALARMS_CHECK(10/*seconds*/);
         }

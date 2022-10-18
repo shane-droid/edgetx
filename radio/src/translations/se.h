@@ -102,7 +102,7 @@
 #endif
 
 #define TR_CSWEQUAL                     "a=x"
-#define TR_VCSWFUNC                     "---",TR_CSWEQUAL,"a~x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b","Δ≥x","|Δ|≥x",TR_CSWTIMER,TR_CSWSTICKY
+#define TR_VCSWFUNC                     "---",TR_CSWEQUAL,"a" STR_CHAR_TILDE "x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b",STR_CHAR_DELTA "≥x","|" STR_CHAR_DELTA "|≥x",TR_CSWTIMER,TR_CSWSTICKY
 
 #define TR_TEXT_SIZE                    "Std","XS","S","M","L"
 
@@ -313,11 +313,11 @@
 #define TR_TIMER_DIR                    TR("Återst.", "Visa återstående"), TR("Förbrukad", "Visa förbrukad")
 
 #if defined(COLORLCD)
-#if defined(BOLD)
-#define TR_FONT_SIZES                   "STD"
-#else
-#define TR_FONT_SIZES                   "STD","FET","XXS","XS","L","XL","XXL"
-#endif
+  #if defined(BOLD)
+    #define TR_FONT_SIZES               "STD"
+  #else
+    #define TR_FONT_SIZES               "STD","FET","XXS","XS","L","XL","XXL"
+  #endif
 #endif
 
 
@@ -1100,6 +1100,12 @@
 #define TR_MAIN_VIEW_X                  "Huvudvy X"
 #define TR_PANEL1_BACKGROUND            "Panel 1 bakgrund"
 #define TR_PANEL2_BACKGROUND            "Panel 2 bakgrund"
+#define TR_WIDGET_GAUGE                 "Mätare"
+#define TR_WIDGET_MODELBMP              "Modellinfo"
+#define TR_WIDGET_OUTPUTS               "Output"
+#define TR_WIDGET_TEXT                  "Text"
+#define TR_WIDGET_TIMER                 "Timer"
+#define TR_WIDGET_VALUE                 "Värde"
 
 // About screen
 #define TR_ABOUTUS                      "Om oss"
@@ -1143,14 +1149,14 @@
 #define TR_CELLSENSOR                   "Cellsensor"
 #define TR_GPSSENSOR                    "GPS-sensor"
 #define TR_CURRENTSENSOR                "Sensor"
-#define TR_AUTOOFFSET                   "Auto Offset"
+#define TR_AUTOOFFSET                   "Auto offset"
 #define TR_ONLYPOSITIVE                 "Positiv"
 #define TR_FILTER                       "Filter"
 #define TR_TELEMETRYFULL                "Alla telemetriplatser upptagna!"
 #define TR_SERVOS_OK                    "Servon OK"
 #define TR_SERVOS_KO                    "Servon KO"
 
-#define TR_INVERTED_SERIAL              INDENT "Invert"
+#define TR_INVERTED_SERIAL              INDENT "Inverterad"
 #define TR_IGNORE_INSTANCE              TR(INDENT "Ej inst.", INDENT "Ignorera instansfel")
 #define TR_DISCOVER_SENSORS             "Sök nya"
 #define TR_STOP_DISCOVER_SENSORS        "Avbryt sökning"
@@ -1159,6 +1165,7 @@
 #define TR_SELECT_WIDGET                "Välj widget"
 #define TR_REMOVE_WIDGET                "Ta bort widget"
 #define TR_WIDGET_SETTINGS              "Widgetinställningar"
+#define TR_WIDGET_FULLSCREEN            "Hel skärm"
 #define TR_REMOVE_SCREEN                "Ta bort huvudvy"
 
 #if LCD_W > LCD_H
@@ -1362,9 +1369,9 @@
 #define TR_ADD_ALL_TRIMS_TO_SUBTRIMS    "Addera alla trimmar till subtrimmar"
 
 #if LCD_W > LCD_H
-  #define TR_OPEN_CHANNEL_MONITORS     "Öppna kanalmonitorn" 
+  #define TR_OPEN_CHANNEL_MONITORS      "Öppna kanalmonitorn" 
 #else
-  #define TR_OPEN_CHANNEL_MONITORS     "Öppna kanalmon." 
+  #define TR_OPEN_CHANNEL_MONITORS      "Öppna kanalmon." 
 #endif
 
 #define TR_DUPLICATE                    "Duplicera"

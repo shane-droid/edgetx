@@ -64,6 +64,9 @@
 #elif defined(TRANSLATIONS_TW)
 #include "translations/tw.h"
 #define LEN_SPECIAL_CHARS 0
+#elif defined(TRANSLATIONS_JP)
+#include "translations/jp.h"
+#define LEN_SPECIAL_CHARS 0
 #else
 #include "translations/en.h"
 #define LEN_SPECIAL_CHARS 0
@@ -711,6 +714,12 @@ extern const char STR_COLOR[];
 extern const char STR_MAIN_VIEW_X[];
 extern const char STR_PANEL1_BACKGROUND[];
 extern const char STR_PANEL2_BACKGROUND[];
+extern const char STR_WIDGET_GAUGE[];
+extern const char STR_WIDGET_MODELBMP[];
+extern const char STR_WIDGET_OUTPUTS[];
+extern const char STR_WIDGET_TEXT[];
+extern const char STR_WIDGET_TIMER[];
+extern const char STR_WIDGET_VALUE[];
 extern const char STR_MODULES_RX_VERSION[];
 #endif
 extern const char STR_EXECUTE_FILE[];
@@ -1057,6 +1066,7 @@ extern const char STR_CONFIRMDELETE[];
 extern const char STR_SELECT_WIDGET[];
 extern const char STR_REMOVE_WIDGET[];
 extern const char STR_WIDGET_SETTINGS[];
+extern const char STR_WIDGET_FULLSCREEN[];
 extern const char STR_REMOVE_SCREEN[];
 extern const char STR_SETUP_WIDGETS[];
 extern const char STR_USER_INTERFACE[];

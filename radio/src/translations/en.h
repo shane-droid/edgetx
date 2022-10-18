@@ -95,7 +95,7 @@
 #endif
 
 #define TR_CSWEQUAL                    "a=x"
-#define TR_VCSWFUNC                    "---",TR_CSWEQUAL,"a~x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b",STR_CHAR_DELTA "≥x","|" STR_CHAR_DELTA "|≥x",TR_CSWTIMER,TR_CSWSTICKY,TR_CSWSAFE
+#define TR_VCSWFUNC                    "---",TR_CSWEQUAL,"a" STR_CHAR_TILDE "x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b",STR_CHAR_DELTA "≥x","|" STR_CHAR_DELTA "|≥x",TR_CSWTIMER,TR_CSWSTICKY,TR_CSWSAFE
 
 #if defined(VARIO)
   #define TR_VVARIO                    "Vario"
@@ -1050,6 +1050,12 @@
 #define TR_MAIN_VIEW_X                 "Main view X"
 #define TR_PANEL1_BACKGROUND           "Panel1 background"
 #define TR_PANEL2_BACKGROUND           "Panel2 background"
+#define TR_WIDGET_GAUGE                "Gauge"
+#define TR_WIDGET_MODELBMP             "Model info"
+#define TR_WIDGET_OUTPUTS              "Outputs"
+#define TR_WIDGET_TEXT                 "Text"
+#define TR_WIDGET_TIMER                "Timer"
+#define TR_WIDGET_VALUE                "Value"
 
 // About screen
 #define TR_ABOUTUS                     TR(" ABOUT ", "ABOUT")
@@ -1106,6 +1112,7 @@
 #define TR_DELETE_ALL_SENSORS          "Delete all"
 #define TR_CONFIRMDELETE               "Really " LCDW_128_480_LINEBREAK "delete all ?"
 #define TR_SELECT_WIDGET               "Select widget"
+#define TR_WIDGET_FULLSCREEN           "Full screen"
 #define TR_REMOVE_WIDGET               "Remove widget"
 #define TR_WIDGET_SETTINGS             "Widget settings"
 #define TR_REMOVE_SCREEN               "Remove screen"

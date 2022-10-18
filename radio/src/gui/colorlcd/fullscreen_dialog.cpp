@@ -28,7 +28,7 @@
 FullScreenDialog::FullScreenDialog(
     uint8_t type, std::string title, std::string message, std::string action,
     const std::function<void(void)>& confirmHandler) :
-    Window(MainWindow::instance(), {0, 0, LCD_W, LCD_H}, OPAQUE),
+    Window(Layer::back(), {0, 0, LCD_W, LCD_H}, OPAQUE),
     type(type),
     title(std::move(title)),
     message(std::move(message)),
@@ -51,6 +51,7 @@ FullScreenDialog::FullScreenDialog(
 // #endif
 
   bringToTop();
+  lv_obj_add_event_cb(lvobj, FullScreenDialog::long_pressed, LV_EVENT_LONG_PRESSED, nullptr);
 }
 
 void FullScreenDialog::paint(BitmapBuffer * dc)
@@ -107,6 +108,17 @@ void FullScreenDialog::paint(BitmapBuffer * dc)
     
     dc->drawText(ALERT_MESSAGE_LEFT + w + 20, ALERT_ACTION_TOP,
                  STR_EXIT, flags);
+  }
+}
+
+void FullScreenDialog::long_pressed(lv_event_t* e)
+{
+  auto obj = lv_event_get_target(e);
+  auto fs = (FullScreenDialog*)lv_obj_get_user_data(obj);
+
+  if (fs) {
+    fs->onClicked();
+    lv_indev_wait_release(lv_indev_get_act());
   }
 }
 

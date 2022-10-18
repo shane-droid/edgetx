@@ -96,7 +96,7 @@
 
 #define TR_CSWEQUAL      "a=x"
 
-#define TR_VCSWFUNC      "---",TR_CSWEQUAL,"a~x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b",STR_CHAR_DELTA "≥x","|" STR_CHAR_DELTA "|≥x",TR_CSWTIMER,TR_CSWSTICKY
+#define TR_VCSWFUNC      "---",TR_CSWEQUAL,"a" STR_CHAR_TILDE "x","a>x","a<x",TR_CSWRANGE,"|a|>x","|a|<x","AND","OR","XOR",TR_CSWSTAY,"a=b","a>b","a<b",STR_CHAR_DELTA "≥x","|" STR_CHAR_DELTA "|≥x",TR_CSWTIMER,TR_CSWSTICKY
 
 #if defined(VARIO)
   #define TR_VVARIO            "Vario"
@@ -1053,6 +1053,12 @@
 #define TR_MAIN_VIEW_X                "Vista principal X"
 #define TR_PANEL1_BACKGROUND          "Fondo panel1"
 #define TR_PANEL2_BACKGROUND          "Fondo panel2"
+#define TR_WIDGET_GAUGE                "Gauge"
+#define TR_WIDGET_MODELBMP             "Models"
+#define TR_WIDGET_OUTPUTS              "Outputs"
+#define TR_WIDGET_TEXT                 "Text"
+#define TR_WIDGET_TIMER                "Timer"
+#define TR_WIDGET_VALUE                "Value"
 
 // Taranis About screen
 #define TR_ABOUTUS             "Nosotros"
@@ -1109,6 +1115,7 @@
 #define TR_DELETE_ALL_SENSORS  "Borrar sensores"
 #define TR_CONFIRMDELETE       "Seguro " LCDW_128_480_LINEBREAK "borrar todo ?"
 #define TR_SELECT_WIDGET       "Seleccionar widget"
+#define TR_WIDGET_FULLSCREEN           "Full screen"
 #define TR_REMOVE_WIDGET       "Borrar widget"
 #define TR_WIDGET_SETTINGS     "Config. widget"
 #define TR_REMOVE_SCREEN       "Borrar pantalla"

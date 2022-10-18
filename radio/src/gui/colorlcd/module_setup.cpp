@@ -33,6 +33,10 @@
 #include "channel_range.h"
 #include "storage/modelslist.h"
 
+#if defined(INTERNAL_MODULE_PXX1) && defined(EXTERNAL_ANTENNA)
+#include "pxx1_settings.h"
+#endif
+
 #if defined(PXX2)
 #include "access_settings.h"
 #endif
@@ -217,6 +221,12 @@ void ModuleWindow::updateModule()
 #if defined(MULTIMODULE)
   else if (isModuleMultimodule(moduleIdx)) {
     modOpts = new MultimoduleSettings(this, grid, moduleIdx);
+  }
+#endif
+#if defined(INTERNAL_MODULE_PXX1) && defined(EXTERNAL_ANTENNA)
+  else if (moduleIdx == INTERNAL_MODULE && isModuleXJT(moduleIdx) &&
+           g_eeGeneral.antennaMode == ANTENNA_MODE_PER_MODEL) {
+    modOpts = new PXX1AntennaSettings(this, grid, moduleIdx);
   }
 #endif
 
@@ -473,11 +483,11 @@ void ModuleWindow::updateSubType()
   
   if (rfPower) {
     if (isModuleR9M_LBT(moduleIdx)) {
-      rfPower->setValues(STR_R9M_LBT_POWER_VALUES);
       rfPower->setMax(R9M_LBT_POWER_MAX);
+      rfPower->setValues(STR_R9M_LBT_POWER_VALUES);
     } else {
-      rfPower->setValues(STR_R9M_FCC_POWER_VALUES);
       rfPower->setMax(R9M_FCC_POWER_MAX);
+      rfPower->setValues(STR_R9M_FCC_POWER_VALUES);
     }
     lv_event_send(rfPower->getLvObj(), LV_EVENT_VALUE_CHANGED, nullptr);
   }
@@ -533,17 +543,6 @@ void ModuleWindow::startRSSIDialog(std::function<void()> closeHandler)
   });
 }
 
-// void ModuleWindow::checkEvents()
-// {
-//   if (isModuleFailsafeAvailable(moduleIdx) != hasFailsafe && rfChoice &&
-//       !rfChoice->isEditMode()) {
-//     hasFailsafe = isModuleFailsafeAvailable(moduleIdx);
-//     update();
-//   }
-
-//   FormGroup::checkEvents();
-// }
-
 class ModuleSubTypeChoice: public Choice
 {
   uint8_t moduleIdx;
@@ -578,6 +577,7 @@ void ModuleSubTypeChoice::update()
       SET_DIRTY();
     });
     setAvailableHandler(nullptr);
+    setTextHandler(nullptr);
   }
   else if (isModuleDSM2(moduleIdx)) {
     setMin(DSM2_PROTO_LP45);
@@ -586,6 +586,7 @@ void ModuleSubTypeChoice::update()
     setGetValueHandler(GET_DEFAULT(md->subType));
     setSetValueHandler(SET_DEFAULT(md->subType));
     setAvailableHandler(nullptr);
+    setTextHandler(nullptr);
   }
   else if (isModuleR9MNonAccess(moduleIdx)) {
     setMin(MODULE_SUBTYPE_R9M_FCC);
@@ -594,6 +595,7 @@ void ModuleSubTypeChoice::update()
     setGetValueHandler(GET_DEFAULT(md->subType));
     setSetValueHandler(SET_DEFAULT(md->subType));
     setAvailableHandler(nullptr);
+    setTextHandler(nullptr);
   }
 #if defined(PXX2)
   else if (isModuleISRM(moduleIdx)) {
@@ -603,6 +605,7 @@ void ModuleSubTypeChoice::update()
     setGetValueHandler(GET_DEFAULT(md->subType));
     setSetValueHandler(SET_DEFAULT(md->subType));
     setAvailableHandler(nullptr);
+    setTextHandler(nullptr);
   }
 #endif
 #if defined(AFHDS2) || defined(AFHDS3)
@@ -629,6 +632,7 @@ void ModuleSubTypeChoice::update()
 #else
     setAvailableHandler(nullptr);
 #endif
+    setTextHandler(nullptr);
   }
 #endif
 #if defined(MULTIMODULE)
