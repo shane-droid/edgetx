@@ -35,8 +35,7 @@ Topbar * TopbarFactory::create(Window * parent)
 }
 
 SetupTopBarWidgetsPage::SetupTopBarWidgetsPage():
-  FormWindow(ViewMain::instance(), rect_t{}, FORM_FORWARD_FOCUS),
-  menu(menu)
+  FormWindow(ViewMain::instance(), rect_t{})
 {
   // remember focus
   Layer::push(this);
@@ -62,7 +61,7 @@ SetupTopBarWidgetsPage::SetupTopBarWidgetsPage():
         this->deleteLater();
         return 1;
       },
-      NO_FOCUS | FORM_NO_BORDER, 0, window_create);
+      NO_FOCUS, 0, window_create);
 #endif
 }
 

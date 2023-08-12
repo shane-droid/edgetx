@@ -38,8 +38,8 @@ static void startBindWaitDialog(Window* parent, uint8_t moduleIdx,
       bindInfo.candidateReceiversNames[bindInfo.selectedReceiverIndex];
   memcpy(g_model.moduleData[moduleIdx].pxx2.receiverName[receiverIdx],
          receiverName, PXX2_LEN_RX_NAME);
-  storageDirty(EE_MODEL);
   bindInfo.step = BIND_OK;
+  setPXX2ReceiverUsed(moduleIdx, receiverIdx);
   moduleState[moduleIdx].mode = MODULE_MODE_NORMAL;
   new MessageDialog(parent, STR_BIND, STR_BIND_OK);
 #else
@@ -153,8 +153,6 @@ void BindWaitDialog::checkEvents()
 {
   auto& bindInfo = getPXX2BindInformationBuffer();
 
-  auto form = &content->form;
-
   if (moduleState[moduleIdx].mode == MODULE_MODE_NORMAL) {
 
     // returned to normal after bind
@@ -163,6 +161,7 @@ void BindWaitDialog::checkEvents()
       deleteLater();
       if (bindInfo.step == BIND_OK) {
         POPUP_INFORMATION(STR_REG_OK);
+        setPXX2ReceiverUsed(moduleIdx, receiverIdx);
       }
       return;
     }
@@ -343,7 +342,7 @@ RegisterDialog::RegisterDialog(Window* parent, uint8_t moduleIdx) :
   // new StaticText(line, rect_t{}, STR_STATUS, 0, COLOR_THEME_PRIMARY1);
   // status = new StaticText(line, rect_t{}, STR_WAITING_FOR_RX, 0, COLOR_THEME_PRIMARY1);
 
-  auto box = new FormGroup(form, rect_t{});
+  auto box = new FormWindow(form, rect_t{});
   box->setFlexLayout(LV_FLEX_FLOW_ROW_WRAP, lv_dpx(8));
   lv_obj_set_style_flex_main_place(box->getLvObj(), LV_FLEX_ALIGN_SPACE_EVENLY, 0);
   box->padAll(lv_dpx(8));
@@ -523,7 +522,7 @@ void ModuleOptions::update()
 
       line = form->newLine(&grid);
       new StaticText(line, rect_t{}, STR_EXT_ANTENNA, 0, COLOR_THEME_PRIMARY1);
-      new CheckBox(line, rect_t{},
+      new ToggleSwitch(line, rect_t{},
                    []() {
                      const auto& hwSettings = getPXX2HardwareAndSettingsBuffer();
                      return hwSettings.moduleSettings.externalAntenna;
@@ -582,7 +581,7 @@ void ModuleOptions::update()
 
   line = form->newLine(&grid);
 
-  auto box = new FormGroup(form, rect_t{});
+  auto box = new FormWindow(form, rect_t{});
   box->setFlexLayout(LV_FLEX_FLOW_ROW_WRAP, lv_dpx(8));
   lv_obj_set_style_flex_main_place(box->getLvObj(), LV_FLEX_ALIGN_SPACE_EVENLY, 0);
   box->padAll(lv_dpx(8));
@@ -751,7 +750,7 @@ void RxOptions::update()
   // PWM rate
   line = form->newLine(&grid);
   new StaticText(line, rect_t{}, isModuleR9MAccess(moduleIdx) ? "6.67ms PWM" : "7ms PWM");
-  new CheckBox(
+  new ToggleSwitch(
       line, rect_t{},
       []() {
         auto& hwSettings = getPXX2HardwareAndSettingsBuffer();
@@ -765,7 +764,7 @@ void RxOptions::update()
   // telemetry disabled
   line = form->newLine(&grid);
   new StaticText(line, rect_t{}, STR_TELEMETRY_DISABLED);
-  auto tele25mw = new CheckBox(
+  auto tele25mw = new ToggleSwitch(
         line, rect_t{},
         []() {
           auto& hwSettings = getPXX2HardwareAndSettingsBuffer();
@@ -786,7 +785,7 @@ void RxOptions::update()
     // telemetry 25 mW
     line = form->newLine(&grid);
     new StaticText(line, rect_t{}, "25mw Tele");
-    new CheckBox(
+    new ToggleSwitch(
         line, rect_t{},
         []() {
           auto& hwSettings = getPXX2HardwareAndSettingsBuffer();
@@ -842,8 +841,8 @@ void RxOptions::update()
           selectionMax++;
     }
 
-    uint8_t mapping = hwSettings.receiverSettings.outputsMapping[i];
-    uint8_t channel = getShiftedChannel(moduleIdx, mapping);
+    //uint8_t mapping = hwSettings.receiverSettings.outputsMapping[i];
+    // uint8_t channel = getShiftedChannel(moduleIdx, mapping);
 
     // TODO
     // auto r = grid.getFieldSlot(2, 1);
@@ -876,7 +875,7 @@ void RxOptions::update()
   line = form->newLine(&grid);
   new DynamicText(line, rect_t{}, [=]() { return statusText; });
 
-  auto box = new FormGroup(form, rect_t{});
+  auto box = new FormWindow(form, rect_t{});
   box->setFlexLayout(LV_FLEX_FLOW_ROW_WRAP, lv_dpx(8));
   lv_obj_set_style_flex_main_place(box->getLvObj(), LV_FLEX_ALIGN_SPACE_EVENLY, 0);
   box->padAll(lv_dpx(8));

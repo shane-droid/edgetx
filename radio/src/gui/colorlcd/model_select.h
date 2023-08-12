@@ -37,12 +37,13 @@ class ModelsPageBody : public FormWindow
  public:
   ModelsPageBody(Window *parent, const rect_t &rect);
 
+  void update();
+
   void setLabels(LabelsVector labels)
   {
     selectedLabels = labels;
     update();
   }
-  void update(int selected = -1);
 
   inline void setSortOrder(ModelsSortBy sortOrder)
   {
@@ -61,12 +62,15 @@ class ModelsPageBody : public FormWindow
   bool refresh = false;
   std::string selectedLabel;
   LabelsVector selectedLabels;
+  ModelCell *focusedModel = nullptr;
   std::function<void()> refreshLabels = nullptr;
 
+  void openMenu();
   void selectModel(ModelCell* model);
   void duplicateModel(ModelCell* model);
   void deleteModel(ModelCell* model);
   void editLabels(ModelCell* model);
+  void saveAsTemplate(ModelCell *model);
 };
 
 class ModelLabelsWindow : public Page
@@ -100,26 +104,6 @@ class ModelLabelsWindow : public Page
   void updateFilteredLabels(std::set<uint32_t> selected, bool setdirty = true);
   void labelRefreshRequest();
   void setTitle();
-};
-
-class ProgressDialog : public Dialog
-{
-  uint32_t lastUpdate = 0;
-  Progress *progress;
-
-  std::function<void()> onClose;
-
- public:
-  ProgressDialog(Window *parent, std::string title,
-                 std::function<void()> onClose);
-
-  void updateProgress(const char *filename, int percentage);
-
-  // disable keys
-  void onEvent(event_t) override;
-
- protected:
-  std::string _title;
 };
 
 #endif  // _MODEL_SELECT_H_

@@ -25,6 +25,7 @@
 #include "tabsgroup.h"
 #include "switches.h"
 
+<<<<<<< HEAD
 constexpr coord_t CSW_1ST_COLUMN = 50;
 constexpr coord_t CSW_2ND_COLUMN = 120;
 constexpr coord_t CSW_3RD_COLUMN = 200;
@@ -111,16 +112,19 @@ class LogicalSwitchDisplayFooter : public Window
   rect_t rect;
   unsigned index = 0;
 };
+=======
+class LogicalSwitchDisplayFooter;
+>>>>>>> 3342d2119547799d3511feaffbc6c1542191d32b
 
 class LogicalSwitchesViewPage : public PageTab
 {
-  public:
-    LogicalSwitchesViewPage() :
+ public:
+  LogicalSwitchesViewPage() :
       PageTab(STR_MONITOR_SWITCHES, ICON_MONITOR_LOGICAL_SWITCHES)
-    {
-    }
+  {
+  }
 
-  protected:
-    void build(FormWindow * window) override;
-    LogicalSwitchDisplayFooter * footer = nullptr;
+ protected:
+  void build(FormWindow* window) override;
+  LogicalSwitchDisplayFooter* footer = nullptr;
 };

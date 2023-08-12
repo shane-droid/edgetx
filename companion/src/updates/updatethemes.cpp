@@ -22,20 +22,19 @@
 #include "updatethemes.h"
 
 UpdateThemes::UpdateThemes(QWidget * parent) :
-  UpdateInterface(parent)
+  UpdateInterface(parent, CID_Themes, tr("Themes"))
 {
-  setName(tr("Themes"));
-  setRepo(QString(GH_REPOS_EDGETX).append("/themes"));
+  init(QString(GH_API_REPOS_EDGETX).append("/themes"));
 }
 
-void UpdateThemes::initAssetSettings()
+void UpdateThemes::assetSettingsInit()
 {
-  if (!isValidSettingsIndex())
+  if (!isSettingsIndexValid())
     return;
 
-  g.component[settingsIndex()].initAllAssets();
+  g.component[id()].initAllAssets();
 
-  ComponentAssetData &cad = g.component[settingsIndex()].asset[0];
+  ComponentAssetData &cad = g.component[id()].asset[0];
   cad.desc("files");
   cad.processes(UPDFLG_Common_Asset);
   cad.flags(cad.processes() | UPDFLG_CopyStructure);

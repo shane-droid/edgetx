@@ -39,6 +39,7 @@ CustomFunctionsPanel::CustomFunctionsPanel(QWidget * parent, ModelData * model, 
   playSoundId = tabModelFactory->registerItemModel(CustomFunctionData::playSoundItemModel());
   harpicId = tabModelFactory->registerItemModel(CustomFunctionData::harpicItemModel());
   repeatId = tabModelFactory->registerItemModel(CustomFunctionData::repeatItemModel());
+  repeatLuaId = tabModelFactory->registerItemModel(CustomFunctionData::repeatLuaItemModel());
   gvarAdjustModeId = tabModelFactory->registerItemModel(CustomFunctionData::gvarAdjustModeItemModel());
 
   tabFilterFactory = new FilteredItemModelFactory();
@@ -203,8 +204,16 @@ CustomFunctionsPanel::CustomFunctionsPanel(QWidget * parent, ModelData * model, 
     tableLayout->addLayout(i, 5, repeatLayout);
     fswtchRepeat[i] = new QComboBox(this);
     fswtchRepeat[i]->setProperty("index", i);
+<<<<<<< HEAD
     fswtchRepeat[i]->setModel(tabModelFactory->getItemModel(repeatId));
     fswtchRepeat[i]->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
+=======
+    if (functions[i].func == FuncPlayScript)
+      fswtchRepeat[i]->setModel(tabModelFactory->getItemModel(repeatLuaId));
+    else
+      fswtchRepeat[i]->setModel(tabModelFactory->getItemModel(repeatId));
+    fswtchRepeat[i]->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+>>>>>>> 3342d2119547799d3511feaffbc6c1542191d32b
     fswtchRepeat[i]->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     repeatLayout->addWidget(fswtchRepeat[i], i + 1);
     connect(fswtchRepeat[i], SIGNAL(currentIndexChanged(int)), this, SLOT(customFunctionEdited()));
@@ -336,9 +345,16 @@ void CustomFunctionsPanel::functionEdited()
     functions[index].clear();
     functions[index].swtch = swtch;
     functions[index].func = (AssignFunc)fswtchFunc[index]->currentData().toInt();
+<<<<<<< HEAD
     functions[index].param = paramTemp;
     strcpy(functions[index].custName, name[index]->text().toLatin1());
 
+=======
+    if (functions[index].func == FuncPlayScript)
+      fswtchRepeat[index]->setModel(tabModelFactory->getItemModel(repeatLuaId));
+    else
+      fswtchRepeat[index]->setModel(tabModelFactory->getItemModel(repeatId));
+>>>>>>> 3342d2119547799d3511feaffbc6c1542191d32b
     refreshCustomFunction(index);
     emit modified();
     lock = false;
@@ -543,7 +559,10 @@ void CustomFunctionsPanel::refreshCustomFunction(int i, bool modified)
           cfn.param = (uint8_t)fswtchParamT[i]->currentIndex();
         populateFuncParamCB(fswtchParamT[i], func, cfn.param);
         widgetsMask |= CUSTOM_FUNCTION_SOURCE_PARAM;
-      } else if (func == FuncSetScreen) {
+      }
+      else if (func == FuncSetScreen) {
+        if (modified)
+          cfn.param = (uint8_t)fswtchParam[i]->value();
         fswtchParam[i]->setDecimals(0);
         fswtchParam[i]->setMinimum(1);
         if(model)
@@ -551,17 +570,18 @@ void CustomFunctionsPanel::refreshCustomFunction(int i, bool modified)
         else
           fswtchParam[i]->setMaximum(1);
         fswtchParam[i]->setSingleStep(1);
-        cfn.param = fswtchParam[i]->value();
         fswtchParam[i]->setValue(cfn.param);
         widgetsMask |= CUSTOM_FUNCTION_NUMERIC_PARAM;
       }
     }
     else if (func == FuncPlayScript) {
-      widgetsMask |= CUSTOM_FUNCTION_FILE_PARAM;
+      widgetsMask |= CUSTOM_FUNCTION_FILE_PARAM | CUSTOM_FUNCTION_REPEAT;
       if (modified) {
         Helpers::getFileComboBoxValue(fswtchParamArmT[i], cfn.paramarm, 8);
+        cfn.repeatParam = fswtchRepeat[i]->currentData().toInt();
       }
       Helpers::populateFileComboBox(fswtchParamArmT[i], scriptsSet, cfn.paramarm);
+      fswtchRepeat[i]->setCurrentIndex(fswtchRepeat[i]->findData(cfn.repeatParam));
     }
     else {
       if (modified)

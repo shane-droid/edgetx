@@ -32,24 +32,6 @@ class SensorValue : public StaticText
   {
   }
 
-//   void paint(BitmapBuffer *dc) override
-//   {
-//     if (isTelemetryValue()) {
-//       uint8_t sensorIndex = (input->srcRaw - MIXSRC_FIRST_TELEM) / 3;
-// #if defined(SIMU)
-//       if (true) {
-// #else
-//       TelemetryItem &telemetryItem = telemetryItems[sensorIndex];
-//       if (telemetryItem.isAvailable()) {
-// #endif
-//         LcdFlags flags = LEFT | COLOR_THEME_PRIMARY1;
-//         drawSensorCustomValue(dc, 3, 2, sensorIndex, lastSensorVal, flags);
-//       } else {
-//         dc->drawText(3, 2, "---", COLOR_THEME_PRIMARY1);
-//       }
-//     }
-//   }
-
   bool isTelemetryValue()
   {
     return input->srcRaw >= MIXSRC_FIRST_TELEM &&
@@ -120,22 +102,21 @@ InputSource::InputSource(Window* parent, ExpoData* input) :
       });
   lv_obj_add_event_cb(lvobj, InputSource::value_changed, LV_EVENT_VALUE_CHANGED, nullptr);
 
-  sensor_form = new FormGroup(this, rect_t{});
+  sensor_form = new FormWindow(this, rect_t{});
   sensor_form->setFlexLayout();
-  auto sensor_form_obj = sensor_form->getLvObj();
 
   FlexGridLayout grid(col_dsc, row_dsc);
   auto line = sensor_form->newLine(&grid);
 
   // Value
-  Window* w = new StaticText(line, rect_t{}, STR_VALUE, 0, COLOR_THEME_PRIMARY1);
+  new StaticText(line, rect_t{}, STR_VALUE, 0, COLOR_THEME_PRIMARY1);
   auto sensor = new SensorValue(line, rect_t{}, input);
 
 
   // Scale
   line = sensor_form->newLine(&grid);
-  w = new StaticText(line, rect_t{}, STR_SCALE, 0, COLOR_THEME_PRIMARY1);
-  w = new NumberEdit(line, rect_t{}, 0,
+  new StaticText(line, rect_t{}, STR_SCALE, 0, COLOR_THEME_PRIMARY1);
+  new NumberEdit(line, rect_t{}, 0,
                  maxTelemValue(input->srcRaw - MIXSRC_FIRST_TELEM + 1),
                  GET_SET_DEFAULT(input->scale), 0, sensor->getSensorPrec());
 
@@ -144,8 +125,8 @@ InputSource::InputSource(Window* parent, ExpoData* input) :
 
 void InputSource::update()
 {
-  if (input->srcRaw > MIXSRC_Ail && input->carryTrim == TRIM_ON) {
-    input->carryTrim = TRIM_OFF;
+  if (input->srcRaw > MIXSRC_LAST_STICK && input->trimSource == TRIM_ON) {
+    input->trimSource = TRIM_OFF;
   }
 
   if (!sensor_form) return;

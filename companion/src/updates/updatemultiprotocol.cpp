@@ -22,22 +22,21 @@
 #include "updatemultiprotocol.h"
 
 UpdateMultiProtocol::UpdateMultiProtocol(QWidget * parent) :
-  UpdateInterface(parent)
+  UpdateInterface(parent, CID_MultiProtocol, tr("Multiprotocol"))
 {
-  setName(tr("Multiprotocol"));
-  setRepo(QString(GITHUB_API_REPOS).append("/pascallanger/DIY-Multiprotocol-TX-Module"));
-  setResultsPerPage(50);  //  GitHub REST API default 30
+  // GitHub REST API default ResultsPerPage = 30
+  init(QString(GH_API_REPOS).append("/pascallanger/DIY-Multiprotocol-TX-Module"), "", 50);
 }
 
-void UpdateMultiProtocol::initAssetSettings()
+void UpdateMultiProtocol::assetSettingsInit()
 {
-  if (!isValidSettingsIndex())
+  if (!isSettingsIndexValid())
     return;
 
-  g.component[settingsIndex()].initAllAssets();
+  g.component[id()].initAllAssets();
 
   {
-  ComponentAssetData &cad = g.component[settingsIndex()].asset[0];
+  ComponentAssetData &cad = g.component[id()].asset[0];
   cad.desc("scripts");
   cad.processes(UPDFLG_Common_Asset);
   cad.flags(cad.processes() | UPDFLG_CopyStructure);
@@ -46,11 +45,11 @@ void UpdateMultiProtocol::initAssetSettings()
   cad.maxExpected(1);
   }
   {
-  ComponentAssetData &cad = g.component[settingsIndex()].asset[1];
+  ComponentAssetData &cad = g.component[id()].asset[1];
   cad.desc("binaries");
   cad.processes(UPDFLG_Common_Asset &~ UPDFLG_Decompress);
   cad.flags(cad.processes() | UPDFLG_CopyFiles);
-  cad.filterType(UpdateParameters::UFT_Expression);
+  cad.filterType(UpdateParameters::UFT_Pattern);
   cad.filter("^mm-stm-serial-.*\\.bin$");
   cad.destSubDir("FIRMWARE");
   }

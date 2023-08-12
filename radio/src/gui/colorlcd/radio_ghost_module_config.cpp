@@ -22,7 +22,6 @@
 #include "opentx.h"
 #include "radio_ghost_module_config.h"
 #include "libopenui.h"
-
 #include "telemetry/ghost.h"
 #include "telemetry/ghost_menu.h"
 
@@ -30,8 +29,7 @@ class GhostModuleConfigWindow: public Window
 {
   public:
     GhostModuleConfigWindow(Window * parent, const rect_t & rect) :
-    Window(parent, rect, FORWARD_SCROLL // | FORM_FORWARD_FOCUS
-           | REFRESH_ALWAYS)
+    Window(parent, rect, REFRESH_ALWAYS)
     {
       // setFocus(SET_FOCUS_DEFAULT);
     }
@@ -85,6 +83,40 @@ class GhostModuleConfigWindow: public Window
   protected:
 };
 
+static void ghostmoduleconfig_cb(lv_event_t* e)
+{
+  RadioGhostModuleConfig* ghostmoduleconfig = (RadioGhostModuleConfig*)lv_event_get_user_data(e);
+  if (!ghostmoduleconfig || ghostmoduleconfig->deleted()) return;
+
+  uint32_t key = lv_event_get_key(e);
+
+  switch (key) {
+    case LV_KEY_LEFT:
+      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYUP;
+      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
+      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
+      break;
+    case LV_KEY_RIGHT:
+      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYDOWN;
+      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
+      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
+      break;
+
+    case LV_KEY_ENTER:
+      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYPRESS;
+      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
+      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
+      break;
+  }
+}
+
+void RadioGhostModuleConfig::onCancel()
+{
+  reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYLEFT;
+  reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
+  moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
+}
+
 RadioGhostModuleConfig::RadioGhostModuleConfig(uint8_t moduleIdx) :
   Page(ICON_RADIO_TOOLS),
   moduleIdx(moduleIdx)
@@ -92,7 +124,11 @@ RadioGhostModuleConfig::RadioGhostModuleConfig(uint8_t moduleIdx) :
   init();
   buildHeader(&header);
   buildBody(&body);
-  // setFocus(SET_FOCUS_DEFAULT);
+  lv_obj_clear_flag(lvobj, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_clear_flag(lvobj, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+  lv_group_add_obj(lv_group_get_default(), lvobj);
+  lv_group_set_editing(lv_group_get_default(), true);
+  lv_obj_add_event_cb(lvobj, ghostmoduleconfig_cb, LV_EVENT_KEY, this);
 #if defined(TRIMS_EMULATE_BUTTONS)
   setTrimsAsButtons(true);  // Use trim joysticks to operate menu (e.g. on NV14)
 #endif
@@ -100,7 +136,7 @@ RadioGhostModuleConfig::RadioGhostModuleConfig(uint8_t moduleIdx) :
 
 void RadioGhostModuleConfig::buildHeader(Window * window)
 {
-  new StaticText(window, {PAGE_TITLE_LEFT, PAGE_TITLE_TOP + 10, LCD_W - PAGE_TITLE_LEFT, PAGE_LINE_HEIGHT}, "GHOST MODULE", 0, COLOR_THEME_SECONDARY1);
+  header.setTitle("GHOST MODULE");
 }
 
 void RadioGhostModuleConfig::buildBody(FormWindow * window)
@@ -112,38 +148,6 @@ void RadioGhostModuleConfig::buildBody(FormWindow * window)
 void RadioGhostModuleConfig::onEvent(event_t event)
 {
   switch (event) {
-#if defined(ROTARY_ENCODER_NAVIGATION)
-    case EVT_ROTARY_LEFT:
-#else
-    case EVT_KEY_BREAK(KEY_UP):
-#endif
-      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYUP;
-      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
-      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
-      break;
-
-#if defined(ROTARY_ENCODER_NAVIGATION)
-    case EVT_ROTARY_RIGHT:
-#else
-    case EVT_KEY_BREAK(KEY_DOWN):
-#endif
-      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYDOWN;
-      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
-      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
-      break;
-
-    case EVT_KEY_FIRST(KEY_ENTER):
-      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYPRESS;
-      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
-      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
-      break;
-
-    case EVT_KEY_BREAK(KEY_EXIT):
-      reusableBuffer.ghostMenu.buttonAction = GHST_BTN_JOYLEFT;
-      reusableBuffer.ghostMenu.menuAction = GHST_MENU_CTRL_NONE;
-      moduleState[EXTERNAL_MODULE].counter = GHST_MENU_CONTROL;
-      break;
-
     case EVT_KEY_LONG(KEY_EXIT):
       memclear(&reusableBuffer.ghostMenu, sizeof(reusableBuffer.ghostMenu));
       reusableBuffer.ghostMenu.buttonAction = GHST_BTN_NONE;

@@ -32,9 +32,10 @@
   Implements a bit field, number of bits is set by the template,
   each bit can be modified and read by the provided methods.
 */
-template <unsigned int NUM_BITS> class BitField {
+template <unsigned int NUM_BITS> class BitField
+{
   private:
-    uint8_t bits[(NUM_BITS+7)/8];
+    uint8_t bits[(NUM_BITS + 7) / 8];
   public:
     BitField()
     {
@@ -54,7 +55,6 @@ template <unsigned int NUM_BITS> class BitField {
 
     bool getBit(unsigned int bitNo) const
     {
-      // assert(bitNo < NUM_BITS);
       if (bitNo >= NUM_BITS) return false;
       return bits[bitNo >> 3] & (1 << (bitNo & 0x07));
     }
@@ -559,6 +559,8 @@ void audioTask(void * pdata);
   #define AUDIO_ERROR_MESSAGE(e) audioEvent(e)
   #define AUDIO_TIMER_MINUTE(t)  playDuration(t, 0, 0)
 
+void onKeyError();
+
 void audioKeyPress();
 void audioKeyError();
 void audioTrimPress(int value);
@@ -589,6 +591,7 @@ void audioTimerCountdown(uint8_t timer, int value);
 #define AUDIO_RAS_RED()          audioEvent(AU_RAS_RED)
 #define AUDIO_TELEMETRY_LOST()   audioEvent(AU_TELEMETRY_LOST)
 #define AUDIO_TELEMETRY_BACK()   audioEvent(AU_TELEMETRY_BACK)
+#define AUDIO_TRAINER_CONNECTED() audioEvent(AU_TRAINER_CONNECTED)
 #define AUDIO_TRAINER_LOST()     audioEvent(AU_TRAINER_LOST)
 #define AUDIO_TRAINER_BACK()     audioEvent(AU_TRAINER_BACK)
 

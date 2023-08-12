@@ -135,6 +135,12 @@ void audioSpiInit(void)
   SPI_I2S_ClearFlag(AUDIO_SPI, SPI_I2S_FLAG_TXE);
 }
 
+void audioWaitReady()
+{
+  // The audio amp needs ~2s to start
+  RTOS_WAIT_MS(2000); // 2s
+}
+
 void audioSpiSetSpeed(uint8_t speed)
 {
   AUDIO_SPI->CR1 &= 0xFFC7; // Fsck=Fcpu/256
@@ -271,29 +277,24 @@ void audioResetDecodeTime(void)
 
 uint8_t audioHardReset(void)
 {
-  uint8_t retry=0;
-  RST_LOW();
-  delay_ms(20);
   XDCS_HIGH();
   CS_HIGH();
+  RST_LOW();
+  delay_ms(100); // 100ms
   RST_HIGH();
-  while (READ_DREQ() == 0 && retry < 200)
-  {
-    retry++;
-    delay_us(50);
-  }
+
+  if (!audioWaitDreq(5000))
+    return 0;
+
   delay_ms(20); // 20ms
-  return retry < 200;
+  return 1;
 }
 
 uint8_t audioSoftReset(void)
 {
   audioSpiSetSpeed(SPI_SPEED_64);
   if (!audioWaitDreq(100))
-  {
-    TRACE("audioSoftReset !audioWaitDreq");
     return 0;
-  }
 
   audioSpiReadWriteByte(0Xff);
 
@@ -308,6 +309,7 @@ uint8_t audioSoftReset(void)
     retry++;
     audioSpiWriteCmd(SPI_CLOCKF, 0x9800);
   }
+
   audioResetDecodeTime(); // reset the decoding time
   audioSpiSetSpeed(SPI_SPEED_8);
   XDCS_LOW();
@@ -355,66 +357,91 @@ void audioSendRiffHeader()
   audioSpiWriteBuffer(RiffHeader, sizeof(RiffHeader));
 }
 
-void audioOn()
+#if defined(AUDIO_MUTE_GPIO_PIN)
+static inline void setMutePin(bool enabled)
 {
-  GPIO_SetBits(AUDIO_SHUTDOWN_GPIO, AUDIO_SHUTDOWN_GPIO_PIN);
+  if (enabled) {
+#if defined(INVERTED_MUTE_PIN)
+    GPIO_ResetBits(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#else
+    GPIO_SetBits(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#endif
+  } else {
+#if defined(INVERTED_MUTE_PIN)
+    GPIO_SetBits(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#else
+    GPIO_ResetBits(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#endif
+  }
 }
 
-void audioOff()
+static inline bool getMutePin(void)
 {
-  GPIO_ResetBits(AUDIO_SHUTDOWN_GPIO, AUDIO_SHUTDOWN_GPIO_PIN);
+#if defined(INVERTED_MUTE_PIN)
+  return !GPIO_ReadOutputDataBit(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#else
+  return GPIO_ReadOutputDataBit(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
+#endif
 }
 
-void audioAmpInit()
+void audioMute()
+{
+#if defined(AUDIO_UNMUTE_DELAY)
+  tmr10ms_t now = get_tmr10ms();
+  if (!audioQueue.lastAudioPlayTime) {
+    // we start the mute delay now
+    audioQueue.lastAudioPlayTime = now;
+  } else if (now - audioQueue.lastAudioPlayTime > AUDIO_MUTE_DELAY / 10) {
+    // delay expired, we may mute
+    setMutePin(true);
+  }
+#else
+  // mute
+  setMutePin(true);
+#endif
+}
+
+void audioUnmute()
+{
+#if defined(AUDIO_UNMUTE_DELAY)
+  // if muted
+  if (getMutePin()) {
+    // ..un-mute
+    setMutePin(false);
+    RTOS_WAIT_MS(AUDIO_UNMUTE_DELAY);
+  }
+  // reset the mute delay
+  audioQueue.lastAudioPlayTime = 0;
+#else
+  setMutePin(false);
+#endif
+}
+
+void audioMuteInit()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = AUDIO_SHUTDOWN_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Pin = AUDIO_MUTE_GPIO_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-  GPIO_Init(AUDIO_SHUTDOWN_GPIO, &GPIO_InitStructure);
-  GPIO_ResetBits(AUDIO_SHUTDOWN_GPIO, AUDIO_SHUTDOWN_GPIO_PIN);
+  GPIO_Init(AUDIO_MUTE_GPIO, &GPIO_InitStructure);
+  GPIO_ResetBits(AUDIO_MUTE_GPIO, AUDIO_MUTE_GPIO_PIN);
 }
-
-bool hardResetDone = false;
-bool softResetDone = false;
-
-bool isAudioReady()
-{
-  return hardResetDone && softResetDone;
-}
-
-void audioWaitReady()
-{
-  while (!isAudioReady()) {
-    audioChipReset();
-    RTOS_WAIT_MS(1000);
-  }
-}
-
-bool audioChipReset()
-{
-  audioSpiSetSpeed(SPI_SPEED_64);
-  if (!hardResetDone) {
-    hardResetDone = audioHardReset() > 0;
-    softResetDone = false;
-  }
-  if (!softResetDone) {
-    softResetDone = audioSoftReset() > 0;
-  }
-  audioSpiSetSpeed(SPI_SPEED_8);
-  if (hardResetDone && softResetDone) {
-    audioSendRiffHeader();
-    audioOn();
-  }
-  return hardResetDone && softResetDone;
-}
+#endif
 
 void audioInit()
 {
-  audioAmpInit();
+#if defined(AUDIO_MUTE_GPIO_PIN)
+  audioMuteInit();
+#endif
+
   audioSpiInit();
+  audioHardReset();
+  audioSoftReset();
+  audioSpiSetSpeed(SPI_SPEED_8);
+  delay_ms(1); // 1ms
+  audioSendRiffHeader();
 }
 
 uint8_t * currentBuffer = nullptr;
@@ -435,14 +462,10 @@ void audioSetCurrentBuffer(const AudioBuffer * buffer)
 
 void audioConsumeCurrentBuffer()
 {
-  if (!hardResetDone || !softResetDone) {
-     return;
-  }
-
   if (newVolume >= 0) {
     uint8_t value = newVolume;
     audioSpiWriteCmd(SPI_VOL, (value << 8) + value);
-    audioSendRiffHeader();
+    // audioSendRiffHeader();
     newVolume = -1;
   }
 
@@ -451,6 +474,9 @@ void audioConsumeCurrentBuffer()
   }
 
   if (currentBuffer) {
+#if defined(AUDIO_MUTE_GPIO_PIN)
+    audioUnmute();
+#endif
     uint32_t written = audioSpiWriteData(currentBuffer, currentSize);
     currentBuffer += written;
     currentSize -= written;
@@ -460,6 +486,11 @@ void audioConsumeCurrentBuffer()
       currentSize = 0;
     }
   }
+#if defined(AUDIO_MUTE_GPIO_PIN)
+  else {
+    audioMute();
+  }
+#endif
 }
 
 // adjust this value for a volume level just above the silence
@@ -474,7 +505,7 @@ void setScaledVolume(uint8_t volume)
   }
   // maximum volume is 0x00 and total silence is 0xFE
   if (volume == 0) {
-    setVolume(0xFE);  // silence  
+    setVolume(0xFE);  // silence
   }
   else {
     uint32_t vol = (VOLUME_MIN_DB * 2) - ((uint32_t)volume * (VOLUME_MIN_DB * 2)) / VOLUME_LEVEL_MAX;

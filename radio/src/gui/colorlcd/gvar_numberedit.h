@@ -29,6 +29,8 @@
 
 constexpr coord_t GVAR_BUTTON_WIDTH = 30;
 
+class TextButton;
+
 class GVarNumberEdit : public Window
 {
  public:
@@ -40,10 +42,16 @@ class GVarNumberEdit : public Window
   void switchGVarMode();
   void setSuffix(std::string value);
 
+  void setFastStep(int value) { num_field->setFastStep(value); }
+  void setAccelFactor(int value) { num_field->setAccelFactor(value); }
+  
  protected:
   Choice* gvar_field = nullptr;
   NumberEdit* num_field = nullptr;
   FormField* act_field = nullptr;
+#if defined(GVARS)
+  TextButton* m_gvBtn = nullptr;
+#endif
 
   int32_t vmin;
   int32_t vmax;

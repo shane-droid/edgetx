@@ -20,10 +20,10 @@
  */
 
 #include "opentx.h"
+#include "hal/rotary_encoder.h"
 
 #include "LvglWrapper.h"
 #include "themes/etx_lv_theme.h"
-#include "widgets/field_edit.h"
 
 #include "view_main.h"
 
@@ -31,9 +31,11 @@ LvglWrapper* LvglWrapper::_instance = nullptr;
 
 static lv_indev_drv_t touchDriver;
 static lv_indev_drv_t keyboard_drv;
+#if defined(ROTARY_ENCODER_NAVIGATION)
 static lv_indev_drv_t rotaryDriver;
 
 static lv_indev_t* rotaryDevice = nullptr;
+#endif
 static lv_indev_t* keyboardDevice = nullptr;
 static lv_indev_t* touchDevice = nullptr;
 
@@ -118,16 +120,17 @@ static void keyboardDriverRead(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
   data->key = 0;
 
-  if (isEvent()) {                            // event waiting
-    event_t evt = getEvent(false);            // get keyEvent for hard keys other than trim switches
+  if (isEvent()) { // event waiting
+    event_t evt = getEvent();
 
-    if(evt == EVT_KEY_FIRST(KEY_PGUP) ||      // generate acoustic/haptic feedback if radio settings allow
-       evt == EVT_KEY_FIRST(KEY_PGDN) ||
+    if(evt == EVT_KEY_FIRST(KEY_PAGEUP) ||
+       evt == EVT_KEY_FIRST(KEY_PAGEDN) ||
        evt == EVT_KEY_FIRST(KEY_ENTER) ||
        evt == EVT_KEY_FIRST(KEY_MODEL) ||
        evt == EVT_KEY_FIRST(KEY_EXIT) ||
-       evt == EVT_KEY_FIRST(KEY_TELEM) ||
-       evt == EVT_KEY_FIRST(KEY_RADIO)) {
+       evt == EVT_KEY_FIRST(KEY_TELE) ||
+       evt == EVT_KEY_FIRST(KEY_SYS)) {
+      // generate acoustic/haptic feedback if radio settings allow
       audioKeyPress();
     }
 
@@ -157,8 +160,9 @@ static void keyboardDriverRead(lv_indev_drv_t *drv, lv_indev_data_t *data)
 
   // simulate EXIT release: necessary to map
   // EVT_KEY_BREAK(KEY_EXIT) to LV_EVENT_CANCEL
-  if (data->key == KEY_EXIT && data->state == LV_INDEV_STATE_PRESSED) {
+  if (data->key == LV_KEY_ESC && data->state == LV_INDEV_STATE_PRESSED) {
     data->state = LV_INDEV_STATE_RELEASED;
+    backup_kb_data(data);
   }
 }
 
@@ -232,16 +236,18 @@ extern "C" void touchDriverRead(lv_indev_drv_t *drv, lv_indev_data_t *data)
 }
 
 #if defined(ROTARY_ENCODER_NAVIGATION)
+extern volatile uint32_t rotencDt;
+static int8_t _rotary_enc_accel = 0;
+
 static void rotaryDriverRead(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
   static rotenc_t prevPos = 0;
   static int8_t prevDir = 0;
-  static int8_t accel = 0;
-  static tmr10ms_t lastEvent = 0;
+  static uint32_t lastDt = 0;
 
-  rotenc_t newPos = (ROTARY_ENCODER_NAVIGATION_VALUE / ROTARY_ENCODER_GRANULARITY);
-  auto diff = newPos - prevPos;
-  prevPos = newPos;
+  rotenc_t newPos = rotaryEncoderGetRawValue();
+  rotenc_t diff = (newPos - prevPos) / ROTARY_ENCODER_GRANULARITY;
+  prevPos += diff * ROTARY_ENCODER_GRANULARITY;
 
   data->enc_diff = (int16_t)diff;
   data->state = LV_INDEV_STATE_RELEASED;
@@ -249,38 +255,49 @@ static void rotaryDriverRead(lv_indev_drv_t *drv, lv_indev_data_t *data)
   if (diff != 0) {
     reset_inactivity();
 
-    bool use_accel = false;
-    auto i = lv_indev_get_act();
-    if (i) {
-      auto g = i->group;
-      if (g && lv_group_get_editing(g)) {
-        auto obj = lv_group_get_focused(g);
-        use_accel = obj && lv_obj_has_flag(obj, LV_OBJ_FLAG_ENCODER_ACCEL);
-      }
-    }
-    
     int8_t dir = 0;
     if (diff < 0) dir = -1;
     else if (diff > 0) dir = 1;
 
-    if (use_accel && (dir == prevDir)) {
-      auto speed = (g_tmr10ms - lastEvent) / abs(diff);
-      if (speed <= ROTENC_DELAY_HIGHSPEED/2) { // 80 ms
-        // below ROTENC_DELAY_HIGHSPEED btw. events: accelerate
-        accel = min((int8_t)(accel + 1), (int8_t)25);
-      } else if (speed >= ROTENC_DELAY_MIDSPEED/2) { // 160 ms
-        // above ROTENC_DELAY_MIDSPEED btw. events: normal speed
-        accel = 0;
-      }
-      lastEvent = g_tmr10ms;
-      data->enc_diff = (int16_t)diff * max((int16_t)accel, (int16_t)1);
+    if (dir == prevDir) {
+      auto dt = rotencDt - lastDt;
+      dt = max(dt, (uint32_t)1);
+
+      auto dx_dt = (diff * diff * 50) / dt;
+      dx_dt = min(dx_dt, (uint32_t)100);
+
+      _rotary_enc_accel = (int8_t)dx_dt;
     } else {
-      accel = 0;
+      _rotary_enc_accel = 0;
     }
+
     prevDir = dir;
+    lastDt = rotencDt;
   }
 }
-#endif
+
+int8_t rotaryEncoderGetAccel() { return _rotary_enc_accel; }
+
+#else // !defined(ROTARY_ENCODER_NAVIGATION)
+
+int8_t rotaryEncoderGetAccel() { return 0; }
+
+#endif // defined(ROTARY_ENCODER_NAVIGATION)
+
+// Return 32 bit version of color (for recolor of buttons)
+uint32_t makeLvColor32(uint32_t colorFlags)
+{
+  auto color = COLOR_VAL(colorFlags);
+  return (GET_RED(color) << 16u) | (GET_GREEN(color) << 8) | GET_BLUE(color);
+}
+
+// Create recolor version of string value
+std::string makeRecolor(std::string value, uint32_t colorFlags)
+{
+  char s[32];
+  snprintf(s, 32, "#%06" PRIx32 " %s#", makeLvColor32(colorFlags), value.c_str());
+  return std::string(s);
+}
 
 /**
  * Helper function to translate a colorFlags value to a lv_color_t suitable
@@ -322,7 +339,7 @@ void initLvglTheme()
   /* Initialize the ETX theme */
   lv_theme_t* th = etx_lv_theme_init(
       NULL, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
-      false, LV_FONT_DEFAULT);
+      LV_FONT_DEFAULT);
 
   /* Assign the theme to the current display*/
   lv_disp_set_theme(NULL, th);

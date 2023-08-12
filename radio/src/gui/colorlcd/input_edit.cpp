@@ -25,6 +25,7 @@
 #include "curve_param.h"
 #include "gvar_numberedit.h"
 #include "input_source.h"
+#include "curveedit.h"
 
 #include "opentx.h"
 
@@ -35,10 +36,9 @@ InputEditWindow::InputEditWindow(int8_t input, uint8_t index) :
     input(input),
     index(index)
 {
-  std::string title(STR_MENUINPUTS);
-  title += "\n";
-  title += getSourceString(MIXSRC_FIRST_INPUT + input);
-  header.setTitle(title);
+  std::string title2(getSourceString(MIXSRC_FIRST_INPUT + input));
+  header.setTitle(STR_MENUINPUTS);
+  header.setTitle2(title2);
 
   auto body_obj = body.getLvObj();
 #if LCD_H > LCD_W // portrait
@@ -57,6 +57,7 @@ InputEditWindow::InputEditWindow(int8_t input, uint8_t index) :
   auto box = new Window(&body, rect_t{});
   auto box_obj = box->getLvObj();
   lv_obj_set_flex_grow(box_obj, 2);
+  lv_obj_set_scrollbar_mode(box->getLvObj(), LV_SCROLLBAR_MODE_AUTO);
 
 #if LCD_H > LCD_W // portrait
   box->setWidth(body.width() - 2*lv_dpx(8));
@@ -69,7 +70,7 @@ InputEditWindow::InputEditWindow(int8_t input, uint8_t index) :
   lv_obj_set_style_pad_all(form_obj, lv_dpx(8), 0);
   buildBody(form);
 
-  preview = new Curve(&body, rect_t{},
+  preview = new Curve(&body, rect_t{0, 0, INPUT_EDIT_CURVE_WIDTH, INPUT_EDIT_CURVE_HEIGHT},
       [=](int x) -> int {
         ExpoData* line = expoAddress(index);
         int16_t anas[MAX_INPUTS] = {0};
@@ -78,8 +79,7 @@ InputEditWindow::InputEditWindow(int8_t input, uint8_t index) :
       },
       [=]() -> int { return getValue(expoAddress(index)->srcRaw); });
 
-  preview->setWidth(INPUT_EDIT_CURVE_WIDTH);
-  preview->setHeight(INPUT_EDIT_CURVE_HEIGHT);
+  CurveEdit::SetCurrentSource(expoAddress(index)->srcRaw);
 }
 
 static const lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(2),
@@ -113,13 +113,25 @@ void InputEditWindow::buildBody(FormWindow* form)
   // Weight
   line = form->newLine(&grid);
   new StaticText(line, rect_t{}, STR_WEIGHT, 0, COLOR_THEME_PRIMARY1);
-  auto gvar = new GVarNumberEdit(line, rect_t{}, -100, 100, GET_SET_DEFAULT(input->weight));
+  auto gvar = new GVarNumberEdit(line, rect_t{}, -100, 100,
+                                 GET_DEFAULT(input->weight),
+                                 [=](int32_t newValue) {
+                                   input->weight = newValue;
+                                   preview->invalidate();
+                                   SET_DIRTY();
+                                 });
   gvar->setSuffix("%");
 
   // Offset
   line = form->newLine(&grid);
   new StaticText(line, rect_t{}, STR_OFFSET, 0, COLOR_THEME_PRIMARY1);
-  gvar = new GVarNumberEdit(line, rect_t{}, -100, 100, GET_SET_DEFAULT(input->offset));
+  gvar = new GVarNumberEdit(line, rect_t{}, -100, 100,
+                            GET_DEFAULT(input->offset),
+                            [=](int32_t newValue) {
+                              input->offset = newValue;
+                              preview->invalidate();
+                              SET_DIRTY();
+                            });
   gvar->setSuffix("%");
 
   // Switch
@@ -131,7 +143,12 @@ void InputEditWindow::buildBody(FormWindow* form)
   // Curve
   line = form->newLine(&grid);
   new StaticText(line, rect_t{}, STR_CURVE, 0, COLOR_THEME_PRIMARY1);
-  auto param = new CurveParam(line, rect_t{}, &input->curve);
+  auto param = new CurveParam(line, rect_t{}, &input->curve,
+                              [=](int32_t newValue) {
+                                input->curve.value = newValue;
+                                preview->invalidate();
+                                SET_DIRTY();
+                              });
   lv_obj_set_style_grid_cell_x_align(param->getLvObj(), LV_GRID_ALIGN_STRETCH, 0);
 
   line = form->newLine();

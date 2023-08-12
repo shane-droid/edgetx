@@ -28,19 +28,21 @@
 
 class Page;
 
-class PageHeader : public FormGroup
+class PageHeader : public FormWindow
 {
  public:
   PageHeader(Page* parent, uint8_t icon);
 
   uint8_t getIcon() const { return icon; }
   void setTitle(std::string txt) { title->setText(std::move(txt)); }
+  StaticText* setTitle2(std::string txt);
 
   void paint(BitmapBuffer* dc) override;
 
  protected:
   uint8_t icon;
   StaticText* title;
+  StaticText* title2 = nullptr;
 };
 
 class Page : public Window
@@ -55,12 +57,13 @@ class Page : public Window
   void onCancel() override;
   void onClicked() override;
 
-  void paint(BitmapBuffer* dc) override;
   void deleteLater(bool detach = true, bool trash = true) override;
 
  protected:
   PageHeader header;
   FormWindow body;
+
+  void onEvent(event_t event) override;
 };
 
 #endif // _PAGE_H_

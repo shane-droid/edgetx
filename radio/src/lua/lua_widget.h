@@ -27,9 +27,16 @@
 
 #include "opentx_types.h"
 
+#define LUA_TAP_TIME 250 // 250 ms
+
 class LuaEventHandler
 {
 #if defined(HARDWARE_TOUCH)
+  // "tap" handling
+  static uint32_t downTime;
+  static uint32_t tapTime;
+  static uint32_t tapCount;
+  // "swipe" / "slide" handling
   static tmr10ms_t swipeTimeOut;
   static bool _sliding;
   static coord_t _startX;
@@ -53,6 +60,7 @@ class LuaWidget : public Widget, public LuaEventHandler
   friend class LuaWidgetFactory;
 
   int luaWidgetDataRef;
+  int zoneRectDataRef;
   char* errorMessage;
   bool refreshed = false;
 
@@ -66,9 +74,13 @@ class LuaWidget : public Widget, public LuaEventHandler
     
   void setErrorMessage(const char* funcName);
 
+  // Update 'zone' data
+  void updateZoneRect(rect_t rect) override;
+  bool updateTable(const char* idx, int val);
+
  public:
   LuaWidget(const WidgetFactory* factory, Window* parent, const rect_t& rect,
-            WidgetPersistentData* persistentData, int luaWidgetDataRef);
+            WidgetPersistentData* persistentData, int luaWidgetDataRef, int zoneRectDataRef);
   ~LuaWidget() override;
 
 #if defined(DEBUG_WINDOWS)

@@ -46,12 +46,13 @@ class SetupWidgetsPage : public FormWindow
  protected:
   uint8_t customScreenIdx;
   unsigned savedView = 0;
+  void onEvent(event_t event)  override;
 };
 
 class SetupWidgetsPageSlot : public Button
 {
  public:
-  SetupWidgetsPageSlot(FormGroup* parent, const rect_t& rect,
+  SetupWidgetsPageSlot(FormWindow* parent, const rect_t& rect,
                        WidgetsContainer* container, uint8_t slotIndex);
 
   void paint(BitmapBuffer* dc) override;

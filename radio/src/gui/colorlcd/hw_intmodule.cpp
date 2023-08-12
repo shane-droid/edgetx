@@ -34,20 +34,20 @@ static const lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(3),
 static const lv_coord_t row_dsc[] = {LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST};
 
 InternalModuleWindow::InternalModuleWindow(Window *parent) :
-    FormGroup::Line(parent),
+    FormWindow::Line(parent),
     lastModule(g_eeGeneral.internalModule)
 {
   FlexGridLayout grid(col_dsc, row_dsc, 2);
   setLayout(&grid);
 
-  new StaticText(this, rect_t{}, STR_MODE, 0, COLOR_THEME_PRIMARY1);
+  new StaticText(this, rect_t{}, STR_TYPE, 0, COLOR_THEME_PRIMARY1);
 
-  auto box = new FormGroup(this, rect_t{});
+  auto box = new FormWindow(this, rect_t{});
   box->setFlexLayout(LV_FLEX_FLOW_ROW, lv_dpx(8));
   lv_obj_set_style_grid_cell_x_align(box->getLvObj(), LV_GRID_ALIGN_STRETCH, 0);
 
   auto internalModule = new Choice(
-      box, rect_t{}, STR_INTERNAL_MODULE_PROTOCOLS, MODULE_TYPE_NONE,
+      box, rect_t{}, STR_MODULE_PROTOCOLS, MODULE_TYPE_NONE,
       MODULE_TYPE_COUNT - 1, GET_DEFAULT(g_eeGeneral.internalModule),
       [=](int type) { return setModuleType(type); });
 
@@ -55,16 +55,16 @@ InternalModuleWindow::InternalModuleWindow(Window *parent) :
       [](int module) { return isInternalModuleSupported(module); });
 
 #if defined(INTERNAL_MODULE_PXX1) && defined(EXTERNAL_ANTENNA)
-  box = new FormGroup(box, rect_t{});
-  box->setFlexLayout(LV_FLEX_FLOW_ROW, lv_dpx(8));
+  auto pxx1_box = new FormWindow(box, rect_t{});
+  pxx1_box->setFlexLayout(LV_FLEX_FLOW_ROW, lv_dpx(8));
 
-  ant_box = box->getLvObj();
+  ant_box = pxx1_box->getLvObj();
   lv_obj_set_width(ant_box, LV_SIZE_CONTENT);
   lv_obj_set_style_flex_cross_place(ant_box, LV_FLEX_ALIGN_CENTER, 0);
 
-  new StaticText(box, rect_t{}, STR_ANTENNA, 0, COLOR_THEME_PRIMARY1);
+  new StaticText(pxx1_box, rect_t{}, STR_ANTENNA, 0, COLOR_THEME_PRIMARY1);
   new Choice(
-      box, rect_t{}, STR_ANTENNA_MODES, ANTENNA_MODE_INTERNAL,
+      pxx1_box, rect_t{}, STR_ANTENNA_MODES, ANTENNA_MODE_INTERNAL,
       ANTENNA_MODE_EXTERNAL, GET_DEFAULT(g_eeGeneral.antennaMode),
       [](int antenna) {
         if (!isExternalAntennaEnabled() &&
@@ -87,15 +87,15 @@ InternalModuleWindow::InternalModuleWindow(Window *parent) :
 #endif
 
 #if defined(CROSSFIRE)
-  box = new FormGroup(box, rect_t{});
-  box->setFlexLayout(LV_FLEX_FLOW_ROW);
+  auto crsf_box = new FormWindow(box, rect_t{});
+  crsf_box->setFlexLayout(LV_FLEX_FLOW_ROW, lv_dpx(8));
 
-  br_box = box->getLvObj();
+  br_box = crsf_box->getLvObj();
   lv_obj_set_width(br_box, LV_SIZE_CONTENT);
   lv_obj_set_style_flex_cross_place(br_box, LV_FLEX_ALIGN_CENTER, 0);
 
-  new StaticText(box, rect_t{}, STR_BAUDRATE, 0, COLOR_THEME_PRIMARY1);
-  new Choice(box, rect_t{}, STR_CRSF_BAUDRATE, 0,
+  new StaticText(crsf_box, rect_t{}, STR_BAUDRATE, 0, COLOR_THEME_PRIMARY1);
+  new Choice(crsf_box, rect_t{}, STR_CRSF_BAUDRATE, 0,
              CROSSFIRE_MAX_INTERNAL_BAUDRATE, getBaudrate, setBaudrate);
 
   updateBaudrateLine();

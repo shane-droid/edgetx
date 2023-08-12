@@ -70,7 +70,7 @@ fi
 : "${COMMON_OPTIONS:="-DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_RULE_MESSAGES=OFF -Wno-dev "}"
 : "${EXTRA_OPTIONS:="$EXTRA_OPTIONS"}"
 
-COMMON_OPTIONS+=${EXTRA_OPTIONS}
+COMMON_OPTIONS+=${EXTRA_OPTIONS}" "
 
 : "${FIRMARE_TARGET:="firmware-size"}"
 
@@ -113,6 +113,9 @@ do
         tx12mk2)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TX12MK2"
             ;;
+        boxer)
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=BOXER"
+            ;;
         t8)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T8"
             ;;
@@ -122,8 +125,17 @@ do
         tlite)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TLITE"
             ;;
+        tlitef4)
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TLITEF4"
+            ;;
         tpro)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPRO"
+            ;;
+        tprov2)
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=TPROV2"
+            ;;
+        t20)
+            BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=T20"
             ;;
         lr3pro)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=LR3PRO"
@@ -172,6 +184,10 @@ do
             ;;
         commando8)
             BUILD_OPTIONS+="-DPCB=X7 -DPCBREV=COMMANDO8"
+            ;;
+        *)
+            echo "Unknown target: $target_name"
+            exit 1
             ;;
     esac
 
